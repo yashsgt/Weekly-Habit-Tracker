@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Habit Tracker</title>
+
+<style>
+
+/* =====================
+   DEFAULT THEME
+===================== */
+
+:root{
+--bg:#eef1f6;
+--card:#f8f9fc;
+--text:#1f2937;
+--muted:#6b7280;
+--border:#d9dee7;
+--accent:#4f46e5;
+--accent-soft:#e6e9f2;
+--danger:#ef4444;
+--today:#e2e8ff;
+}
+
+.dark{
+--bg:#0b0f19;
+--card:#121826;
+--text:#e5e7eb;
+--muted:#9ca3af;
+--border:#232a3b;
+--accent:#7c8cff;
+--accent-soft:#1c2333;
+--today:#1c2440;
+}
+
+.study{
+--bg:#f4ecd8;
+--card:#fbf6e6;
+--text:#3b3228;
+--muted:#7a6f5a;
+--border:#e4d9bd;
+--accent:#8b6f47;
+--accent-soft:#efe6cf;
+--today:#e9ddbd;
+}
+
+/* =====================
+   LAYOUT
+===================== */
+
+body{
+margin:0;
+font-family:Inter,system-ui;
+background:var(--bg);
+color:var(--text);
+display:flex;
+justify-content:center;
+padding:50px 20px;
+transition:.25s;
+}
+
+.container{
+width:960px;
+background:var(--card);
+border-radius:16px;
+padding:34px;
+box-shadow:0 10px 30px rgba(0,0,0,.06);
+}
+
+/* HEADER */
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+}
+
+.title{
+font-size:28px;
+font-weight:600;
+}
+
+.controls{
+display:flex;
+gap:10px;
+}
+
+button{
+border:none;
+border-radius:8px;
+padding:10px 14px;
+cursor:pointer;
+font-size:15px;
+}
+
+.addBtn{background:var(--accent);color:white;}
+.resetBtn{background:var(--danger);color:white;}
+.themeBtn{background:var(--accent-soft);}
+
+/* CATEGORY DOTS */
+
+.dot{
+width:10px;
+height:10px;
+border-radius:50%;
+display:inline-block;
+margin-right:8px;
+}
+
+.health{background:#22c55e;}
+.studycat{background:#3b82f6;}
+.personal{background:#a855f7;}
+.custom{background:#f59e0b;}
+
+/* GRID */
+
+.grid{
+display:grid;
+grid-template-columns:260px repeat(7,60px) 60px 60px;
+align-items:center;
+}
+
+.headerRow{
+margin-bottom:10px;
+color:var(--muted);
+}
+
+.day{
+text-align:center;
+padding:6px;
+border-radius:6px;
+}
+
+.todayHeader{
+background:var(--today);
+font-weight:600;
+}
+
+/* ROW */
+
+.row{
+padding:10px 0;
+border-top:1px solid var(--border);
+}
+
+.row:hover{
+background:var(--accent-soft);
+border-radius:6px;
+}
+
+/* HABIT NAME */
+
+.habitName{
+outline:none;
+padding:4px 6px;
+border-radius:6px;
+cursor:text;
+}
+
+.habitName:focus{
+background:var(--accent-soft);
+}
+
+/* CHECKBOX */
+
+.checkbox{
+width:26px;
+height:26px;
+margin:auto;
+border:1.5px solid var(--border);
+border-radius:6px;
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+transition:.15s;
+}
+
+.checkbox:hover{
+transform:scale(1.15);
+border-color:var(--accent);
+}
+
+.todayCell{
+background:var(--today);
+}
+
+.checked{
+background:var(--accent);
+color:white;
+border-color:var(--accent);
+}
+
+/* DELETE BUTTON */
+
+.deleteBtn{
+background:none;
+border:none;
+cursor:pointer;
+color:var(--muted);
+font-size:18px;
+}
+
+.deleteBtn:hover{
+color:var(--danger);
+}
+
+/* PROGRESS BAR */
+
+.progressWrap{
+margin-top:25px;
+}
+
+.progressBar{
+height:10px;
+border-radius:8px;
+background:var(--accent-soft);
+overflow:hidden;
+}
+
+.progressFill{
+height:100%;
+width:0%;
+background:linear-gradient(90deg,var(--accent),#22c55e);
+transition:.3s;
+}
+
+/* MODALS */
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,.35);
+justify-content:center;
+align-items:center;
+}
+
+.modalBox{
+background:var(--card);
+padding:25px;
+border-radius:12px;
+width:300px;
+text-align:center;
+}
+
+.modalBox input,
+.modalBox select{
+width:100%;
+padding:10px;
+margin-bottom:12px;
+border:1px solid var(--border);
+border-radius:6px;
+}
+
+.confirmBtns{
+display:flex;
+gap:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+<div class="title">Habits</div>
+
+<div class="controls">
+<button id="themeBtn" class="themeBtn">🌗</button>
+<button id="studyBtn" class="themeBtn">📚</button>
+<button id="resetBtn" class="resetBtn">Reset</button>
+<button id="addBtn" class="addBtn">+ Add</button>
+</div>
+</div>
+
+<div id="headerRow" class="grid headerRow"></div>
+<div id="habitGrid"></div>
+
+<div class="progressWrap">
+<div class="progressBar">
+<div id="progressFill" class="progressFill"></div>
+</div>
+</div>
+
+</div>
+
+<!-- ADD MODAL -->
+
+<div id="addModal" class="modal">
+<div class="modalBox">
+
+<input id="habitInput" placeholder="Habit name">
+
+<select id="categorySelect">
+<option value="health">🟢 Health</option>
+<option value="studycat">🔵 Study</option>
+<option value="personal">🟣 Personal</option>
+<option value="custom">🟡 Custom</option>
+</select>
+
+<button id="confirmAdd" class="addBtn">Add Habit</button>
+
+</div>
+</div>
+
+<!-- RESET MODAL -->
+
+<div id="resetModal" class="modal">
+<div class="modalBox">
+
+<b>Reset all checkmarks?</b>
+
+<div class="confirmBtns">
+<button id="cancelReset">Cancel</button>
+<button id="confirmReset" class="resetBtn">Reset</button>
+</div>
+
+</div>
+</div>
+
+<!-- DELETE MODAL -->
+
+<div id="deleteModal" class="modal">
+<div class="modalBox">
+
+<b>Delete this habit?</b>
+
+<div class="confirmBtns">
+<button id="cancelDelete">Cancel</button>
+<button id="confirmDelete" class="resetBtn">Delete</button>
+</div>
+
+</div>
+</div>
+
+<script>
+
+const days=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const todayIndex=(new Date().getDay()+6)%7;
+
+const headerRow=document.getElementById("headerRow");
+const habitGrid=document.getElementById("habitGrid");
+const progressFill=document.getElementById("progressFill");
+
+const addModal=document.getElementById("addModal");
+const resetModal=document.getElementById("resetModal");
+const deleteModal=document.getElementById("deleteModal");
+
+let habitToDelete=null;
+
+let data=JSON.parse(localStorage.getItem("habitTracker"))||{habits:[]};
+
+/* SAVE */
+
+function save(){
+localStorage.setItem("habitTracker",JSON.stringify(data));
+}
+
+/* HEADER */
+
+function renderHeader(){
+
+let html="<div></div>";
+
+days.forEach((d,i)=>{
+html+=`<div class="day ${i===todayIndex?'todayHeader':''}">${d}</div>`;
+});
+
+html+="<div>🔥</div><div></div>";
+
+headerRow.innerHTML=html;
+}
+
+/* TOGGLE CHECK */
+
+function toggle(i,j){
+data.habits[i].days[j]=!data.habits[i].days[j];
+save();
+render();
+}
+
+/* DELETE FLOW */
+
+function askDeleteHabit(index){
+habitToDelete=index;
+deleteModal.style.display="flex";
+}
+
+document.getElementById("cancelDelete").onclick=()=>{
+deleteModal.style.display="none";
+habitToDelete=null;
+};
+
+document.getElementById("confirmDelete").onclick=()=>{
+if(habitToDelete!==null){
+data.habits.splice(habitToDelete,1);
+save();
+render();
+}
+deleteModal.style.display="none";
+};
+
+/* EDIT NAME */
+
+function editHabit(i,el){
+let name=el.innerText.trim();
+if(!name)return render();
+data.habits[i].name=name;
+save();
+}
+
+/* RENDER */
+
+function render(){
+
+habitGrid.innerHTML="";
+
+data.habits.forEach((habit,i)=>{
+
+let row=document.createElement("div");
+row.className="grid row";
+
+let html=`
+<div contenteditable="true"
+class="habitName"
+onblur="editHabit(${i},this)">
+<span class="dot ${habit.category}"></span>${habit.name}
+</div>
+`;
+
+habit.days.forEach((done,j)=>{
+html+=`
+<div class="checkbox ${done?'checked':''} ${j===todayIndex?'todayCell':''}"
+onclick="toggle(${i},${j})">${done?'✓':''}</div>
+`;
+});
+
+html+=`
+<div>${habit.days.filter(Boolean).length}</div>
+<button class="deleteBtn" onclick="askDeleteHabit(${i})">×</button>
+`;
+
+row.innerHTML=html;
+habitGrid.appendChild(row);
+
+});
+
+updateProgress();
+}
+
+/* PROGRESS */
+
+function updateProgress(){
+let total=data.habits.length*7;
+let done=0;
+data.habits.forEach(h=>h.days.forEach(d=>d&&done++));
+progressFill.style.width=total?Math.round(done/total*100)+"%":"0%";
+}
+
+/* THEME BUTTONS */
+
+document.getElementById("themeBtn").onclick=()=>{
+document.body.classList.toggle("dark");
+document.body.classList.remove("study");
+};
+
+document.getElementById("studyBtn").onclick=()=>{
+document.body.classList.toggle("study");
+document.body.classList.remove("dark");
+};
+
+/* ADD HABIT */
+
+document.getElementById("addBtn").onclick=
+()=>addModal.style.display="flex";
+
+document.getElementById("confirmAdd").onclick=()=>{
+let name=document.getElementById("habitInput").value.trim();
+let category=document.getElementById("categorySelect").value;
+if(!name)return;
+data.habits.push({name,category,days:Array(7).fill(false)});
+addModal.style.display="none";
+save();
+render();
+};
+
+/* RESET */
+
+document.getElementById("resetBtn").onclick=
+()=>resetModal.style.display="flex";
+
+document.getElementById("cancelReset").onclick=
+()=>resetModal.style.display="none";
+
+document.getElementById("confirmReset").onclick=()=>{
+data.habits.forEach(h=>h.days.fill(false));
+resetModal.style.display="none";
+save();
+render();
+};
+
+/* INIT */
+
+renderHeader();
+render();
+
+</script>
+
+</body>
+</html>
